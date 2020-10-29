@@ -1,4 +1,5 @@
 from azureml.core import Run, Dataset
+import csv
 import argparse
 import ast
 import os
@@ -88,8 +89,8 @@ def load_set_as_txt(name, sets):
             for label_entry in l['label']:
                 row.append(','.join([
                     str(label_entry['bottomX']),
-                    str(label_entry['bottomY']),
                     str(label_entry['topX']),
+                    str(label_entry['bottomY']),
                     str(label_entry['topY']),
                     label_entry['label']
                 ]))
@@ -103,5 +104,63 @@ def load_set_as_txt(name, sets):
     labelpath = f'outputs/{name}_labels.txt'
     with open(labelpath, 'w') as f:
         f.writelines([x + '\n' for x in labelset])
+
+    return filepath, labelpath
+
+
+def load_set_as_csv_pbtxt(name, sets, pbtxt=False):
+    """
+    Load the datasets. Expects a list of (label, image) set combinations.
+
+    This version writes the output to CSV files, as expected by the some
+    models. In other cases, some other processing may be required. These files
+    are written to outputs/, so they are stored with the run and can be
+    inspected at a later time.
+
+    :param name:        Name to give the set output
+    :param sets:        A list of (label, image) set combinations
+    :param pbtxt:       Boolean indicating whether to generate pbtxt file with
+                        labels
+    :returns:           Paths to the generated files.
+    """
+    labelset = set()
+    rows = [['class', 'filename', 'height', 'width', 'xmax', 'xmin', 'ymax', 'ymin']]
+    for label_id, image_folder in zip(sets[0::2], sets[1::2]):
+        labels = find_set(label_id)
+
+        for i, l in labels_to_df(labels).iterrows():
+            for label_entry in l['label']:
+                row = [f"{image_folder}/{DATASTORE_NAME}/{l['image_url']}"]
+                row = [
+                    label_entry['label'],
+                    f"{image_folder}/{DATASTORE_NAME}/{l['image_url']}",
+                    1080,
+                    1920,
+                    label_entry['topX'],
+                    label_entry['bottomX'],
+                    label_entry['topY'],
+                    label_entry['bottomY']
+                ]
+                labelset.add(label_entry['label'])
+            rows.append(row)
+
+    filepath = f'outputs/{name}.csv'
+    with open(filepath, 'w') as f:
+        w = csv.writer(f)
+
+        for row in rows:
+            w.writerow(row)
+
+    labelpath = f'outputs/labelmap.pbtxt'
+    if pbtxt:
+        with open(labelpath, 'w') as f:
+            out = ""
+            for i, l in enumerate(labelset):
+                out += \
+                    "item {\n" \
+                    f"    id: {str(i)}\n" \
+                    f"    name: '{l}'\n" \
+                    "}"
+            f.write(out)
 
     return filepath, labelpath

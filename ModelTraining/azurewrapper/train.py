@@ -34,7 +34,8 @@ def _create_args(trainsets=[], testsets=[], parameters={}):
 
 
 def perform_run(experiment, script, source_directory, environment=None,
-        compute_target=None, trainsets=[], testsets=[], parameters={}):
+        compute_target=None, trainsets=[], testsets=[], parameters={},
+        distributed_job_config=None):
 
     if environment is None:
         environment = Environment("user-managed-env")
@@ -45,9 +46,11 @@ def perform_run(experiment, script, source_directory, environment=None,
     # No compute target is provided, hence the Run is performed locally
     src = ScriptRunConfig(
         source_directory=source_directory,
+        compute_target=compute_target,
         script=script,
         arguments=args,
-        environment=environment
+        environment=environment,
+        distributed_job_config=distributed_job_config
     )
 
     run = experiment.submit(config=src)

@@ -5,6 +5,8 @@ import os
 import shutil
 from utils import load_args, find_set, load_set_as_csv_pbtxt, DATASTORE_NAME
 
+from frcnn.model_main_tf2 import tf
+
 logger = logging.getLogger('model')
 fh = logging.FileHandler('logs/model.log')
 fh.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
@@ -47,27 +49,27 @@ if __name__ == "__main__":
 
     # Train the model
 
-    p = subprocess.run(
-        [
-            "python",
-            "model_main_tf2.py",
-            "--model_dir=../outputs/",
-            f"--num_train_steps={num_train_steps}",
-            f"--sample_1_of_n_eval_examples={sample_1_of_n_eval_examples}",
-            "--pipeline_config_path=pipeline.config",
-            "--alsologtostderr"
-        ],
-        cwd="frcnn"
-    )
-    logger.debug(p.stdout)
-    logger.warning(p.stderr)
-    # tf.compat.v1.app.run(argv=[
-    #     "--model_dir=../outputs/",
-    #     f"--num_train_steps={num_train_steps}",
-    #     f"--sample_1_of_n_eval_examples={sample_1_of_n_eval_examples}",
-    #     "--pipeline_config_path=pipeline.config",
-    #     "--alsologtostderr"
-    # ])
+    # p = subprocess.run(
+    #     [
+    #         "python",
+    #         "model_main_tf2.py",
+    #         "--model_dir=../outputs/",
+    #         f"--num_train_steps={num_train_steps}",
+    #         f"--sample_1_of_n_eval_examples={sample_1_of_n_eval_examples}",
+    #         "--pipeline_config_path=pipeline.config",
+    #         "--alsologtostderr"
+    #     ],
+    #     cwd="frcnn"
+    # )
+    # logger.debug(p.stdout)
+    # logger.warning(p.stderr)
+    tf.compat.v1.app.run(argv=[
+        "--model_dir=../outputs/",
+        f"--num_train_steps={num_train_steps}",
+        f"--sample_1_of_n_eval_examples={sample_1_of_n_eval_examples}",
+        "--pipeline_config_path=pipeline.config",
+        "--alsologtostderr"
+    ])
 
     logger.info("Finished training")
 

@@ -1,9 +1,8 @@
-from azureml.core import Run
+from azureml.core import Run, Dataset
 from model import Model
-import argparse
 import logging
-import ast
 import os
+from utils import load_args, find_set, load_set_as_txt
 
 logger = logging.getLogger('model')
 fh = logging.FileHandler('logs/model.log')
@@ -13,74 +12,20 @@ logger.addHandler(fh)
 logger.setLevel('DEBUG')
 
 
-def load_args():
-    """
-    Load the provided arguments.
-
-    :returns:   ArgumentParser object with parsed arguments.
-    """
-    # The configuration of the run is being passed on as arguments,
-    # lets load those
-    parser = argparse.ArgumentParser()
-
-    # Get the folders where the data is mounted
-    parser.add_argument(
-        '--train_images', type=str, dest='train_images',
-        help='Training set images'
-    )
-    parser.add_argument(
-        '--train_labels', type=str, dest='train_labels',
-        help='Training set labels'
-    )
-    parser.add_argument(
-        '--test_images', type=str, dest='test_images',
-        help='Test set images'
-    )
-    parser.add_argument(
-        '--test_labels', type=str, dest='test_labels',
-        help='Test set labels'
-    )
-
-    # Get the parameters to the model.
-    parser.add_argument(
-        '--param_a', type=float, dest='param_a',
-        default=0.01, help='param a'
-    )
-    parser.add_argument(
-        '--param_b', type=float, dest='param_b',
-        default=0.01, help='param b'
-    )
-
-    parser.add_argument(
-        '--weights', type=str, dest='weights',
-        help='Weights dataset'
-    )
-
-    return parser.parse_args()
-
-
-def labels_to_df(dataset):
-    df = dataset.to_pandas_dataframe()
-    df['label'] = df['label'].apply(ast.literal_eval)
-    return df
-
-
 if __name__ == "__main__":
     # Parse arguments. The arguments contains the (path to the) data and the
-    # parameters to the model
-    parameters = load_args()
+    # parameters to the model. Provide the parameters as
+    # [<name>, <type>, <default value>]
+    parameters = load_args([
+        ['param_a', float, 10.0],
+        ['param_b', float, 0.5]
+    ])
 
     param_a = parameters.param_a
     param_b = parameters.param_b
 
-    logger.debug()
-
-    train_images = Run.get_context().input_datasets["train_images"] + '/main_datastore/'
-    train_labels = Run.get_context().input_datasets["train_labels"]
-    test_images = Run.get_context().input_datasets["test_images"] + '/main_datastore/'
-    test_labels = Run.get_context().input_datasets["test_labels"]
-
-    logger.debug(Run.get_context().input_datasets["train_images"])
+    train_set, train_labels = load_set_as_txt('train', parameters.train_sets)
+    test_set, test_labels = load_set_as_txt('test', parameters.test_sets)
 
     #### Implement/perform model training ####
 
@@ -88,13 +33,11 @@ if __name__ == "__main__":
 
     # Train the model
     model = Model(param_a, param_b)
-    model.train(
-        weights,
-        train_images,
-        labels_to_df(train_labels)
-    )
+    model.train(train_set, train_labels)
 
-    logger.info("Finished training")
+    logger.debug(model.labels)
+
+    # logger.info("Finished training")
 
     #### Determine model performance ####
     logger.debug("Measuring performance")
@@ -102,19 +45,24 @@ if __name__ == "__main__":
     # Determine model performance
     correct = 0
     total = 0
-    for index, image_labels in labels_to_df(test_labels).iterrows():
-        img = test_images + image_labels['image_url']
-        logger.debug(img)
+    with open(test_set) as f:
+        for l in f.readlines():
+            logger.debug(l)
+            l = l.rstrip('\n')
+            filename = l.split(' ')[0]
+            labels = l.split(' ')[1:]
 
-        for l in image_labels['label']:
-            if model.predict(img) == l['label']:
-                correct += 1
-            total += 1
+            for label in labels:
+                if model.predict(filename) == label.split(',')[-1]:
+                    correct += 1
+                total += 1
 
     if total == 0:
         accuracy = 0
     else:
         accuracy = correct / total
+
+    logger.debug("Done measuring performance")
 
     #### Register model performance with the run ####
 

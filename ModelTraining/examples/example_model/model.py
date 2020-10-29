@@ -8,17 +8,16 @@ class Model:
         self.var = 0
         self.labels = []
 
-    def train(self, weights, folder, labels):
+    def train(self, dataset_file, label_file):
         lbl_list = []
 
-        with open(weights) as f:
-            pass
-
-        # Labels are provided per image, as a list of dicts in the column
-        # labels
-        for i, l in labels.iterrows():
-            with open(folder + l['image_url'], 'rb') as f:
-                lbl_list += [x['label'] for x in l['label']]
+        with open(dataset_file) as f:
+            for l in f.readlines():
+                l = l.rstrip('\n')
+                filename = l.split(' ')[0]
+                labels = l.split(' ')[1:]
+                with open(filename, 'rb') as f2:
+                    lbl_list += [x.split(',')[-1] for x in labels]
 
         self.labels = lbl_list
 

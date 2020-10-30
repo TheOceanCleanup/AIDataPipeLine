@@ -49,27 +49,28 @@ if __name__ == "__main__":
 
     # Train the model
 
-    # p = subprocess.run(
-    #     [
-    #         "python",
-    #         "model_main_tf2.py",
-    #         "--model_dir=../outputs/",
-    #         f"--num_train_steps={num_train_steps}",
-    #         f"--sample_1_of_n_eval_examples={sample_1_of_n_eval_examples}",
-    #         "--pipeline_config_path=pipeline.config",
-    #         "--alsologtostderr"
-    #     ],
-    #     cwd="frcnn"
-    # )
-    # logger.debug(p.stdout)
-    # logger.warning(p.stderr)
-    tf.compat.v1.app.run(argv=[
-        "--model_dir=../outputs/",
-        f"--num_train_steps={num_train_steps}",
-        f"--sample_1_of_n_eval_examples={sample_1_of_n_eval_examples}",
-        "--pipeline_config_path=pipeline.config",
-        "--alsologtostderr"
-    ])
+    p = subprocess.run(
+        [
+            "python",
+            "model_main_tf2.py",
+            "--model_dir=../outputs/",
+            f"--num_train_steps={num_train_steps}",
+            f"--sample_1_of_n_eval_examples={sample_1_of_n_eval_examples}",
+            "--pipeline_config_path=pipeline.config",
+            "--alsologtostderr"
+        ],
+        cwd="frcnn",
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE
+    )
+    logger.debug(p.stdout)
+    logger.warning(p.stderr)
+    # tf.compat.v1.app.run(argv=[
+    #     "--model_dir=../outputs/",
+    #     f"--num_train_steps={num_train_steps}",
+    #     f"--sample_1_of_n_eval_examples={sample_1_of_n_eval_examples}",
+    #     "--pipeline_config_path=pipeline.config",
+    #     "--alsologtostderr"
+    # ])
 
     logger.info("Finished training")
 

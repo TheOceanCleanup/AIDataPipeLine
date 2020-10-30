@@ -158,9 +158,9 @@ def load_set_as_csv_pbtxt(name, sets, pbtxt=False):
             for i, l in enumerate(labelset):
                 out += \
                     "item {\n" \
-                    f"    id: {str(i)}\n" \
+                    f"    id: {str(i + 1)}\n" \
                     f"    name: '{l}'\n" \
-                    "}"
+                    "}\n"
             f.write(out)
 
     return filepath, labelpath

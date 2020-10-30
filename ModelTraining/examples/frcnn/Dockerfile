@@ -1,6 +1,10 @@
 FROM mcr.microsoft.com/azureml/openmpi3.1.2-cuda10.1-cudnn7-ubuntu18.04
+
+RUN pip install azureml-defaults tensorflow-gpu==2.2.0 absl-py
+
 RUN mkdir /install
 RUN mkdir /install/TensorFlow
+
 WORKDIR /install/TensorFlow
 
 RUN wget https://github.com/tensorflow/models/archive/master.zip

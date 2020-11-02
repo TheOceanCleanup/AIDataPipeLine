@@ -1,4 +1,5 @@
 from azureml.core import Run, Dataset
+from PIL import Image
 import csv
 import argparse
 import ast
@@ -130,12 +131,14 @@ def load_set_as_csv_pbtxt(name, sets, pbtxt=False):
 
         for i, l in labels_to_df(labels).iterrows():
             for label_entry in l['label']:
-                row = [f"{image_folder}/{DATASTORE_NAME}/{l['image_url']}"]
+                fp = f"{image_folder}/{DATASTORE_NAME}/{l['image_url']}"
+                im = Image.open(fp)
+                width, height = im.size
                 row = [
                     label_entry['label'],
-                    f"{image_folder}/{DATASTORE_NAME}/{l['image_url']}",
-                    1080,
-                    1920,
+                    fp,
+                    height,
+                    width,
                     label_entry['topX'],
                     label_entry['bottomX'],
                     label_entry['topY'],

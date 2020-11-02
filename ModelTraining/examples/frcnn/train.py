@@ -64,13 +64,6 @@ if __name__ == "__main__":
     )
     logger.debug(p.stdout)
     logger.warning(p.stderr)
-    # tf.compat.v1.app.run(argv=[
-    #     "--model_dir=../outputs/",
-    #     f"--num_train_steps={num_train_steps}",
-    #     f"--sample_1_of_n_eval_examples={sample_1_of_n_eval_examples}",
-    #     "--pipeline_config_path=pipeline.config",
-    #     "--alsologtostderr"
-    # ])
 
     logger.info("Finished training")
 
@@ -94,13 +87,5 @@ if __name__ == "__main__":
     # Write the model file to the outputs/ folder. This is then automatically
     # attached to the Run, and to any models registered from that run
     # logger.debug("Writing model data")
-
-    # This should be done with exporter_main_v2.py:
-    # python .\exporter_main_v2.py --input_type image_tensor \
-    #   --pipeline_config_path .\models\my_efficientdet_d1\pipeline.config \
-    #   --trained_checkpoint_dir .\models\my_efficientdet_d1\
-    #   --output_directory .\exported-models\my_model
-
-    # model.save('outputs/model.pkl')
 
     logger.info("Train process finished")

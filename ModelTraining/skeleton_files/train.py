@@ -26,7 +26,7 @@ if __name__ == "__main__":
     # parameters to the model. Provide the parameters as
     # [<name>, <type>, <default value>]
     # TODO add the required parameters.
-    parameters = load_args([{
+    parameters = load_args([
         ['regularization_rate', float, 0.01]
     ])
 

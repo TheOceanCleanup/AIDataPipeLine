@@ -1,0 +1,7 @@
+Tensorflow_YOLO/mnist/**
+Tensorflow_YOLO/checkpoints/**
+Tensorflow_YOLO/deep_sort/test_tracking.gif
+Tensorflow_YOLO/IMAGES/**
+Tensorflow_YOLO/log/**
+Tensorflow_YOLO/tools/**
+image/**

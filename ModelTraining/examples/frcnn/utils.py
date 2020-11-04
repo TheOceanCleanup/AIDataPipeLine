@@ -4,6 +4,7 @@ import csv
 import argparse
 import ast
 import os
+import shutil
 
 
 DATASTORE_NAME = 'main_datastore'
@@ -80,7 +81,7 @@ def load_set_as_txt(name, sets):
     :param sets:        A list of (label, image) set combinations
     :returns:           Paths to the generated files.
     """
-    labelset = set()
+    labelset = {}
     rows = []
     for label_id, image_folder in zip(sets[0::2], sets[1::2]):
         labels = find_set(label_id)
@@ -88,14 +89,18 @@ def load_set_as_txt(name, sets):
         for i, l in labels_to_df(labels).iterrows():
             row = [f"{image_folder}/{DATASTORE_NAME}/{l['image_url']}"]
             for label_entry in l['label']:
+                # Create new, numbered, entry of label in labelset
+                if label_entry['label'] not in labelset:
+                    labelset[label_entry['label']] = len(labelset)
+
                 row.append(','.join([
                     str(label_entry['bottomX']),
-                    str(label_entry['topX']),
                     str(label_entry['bottomY']),
+                    str(label_entry['topX']),
                     str(label_entry['topY']),
-                    label_entry['label']
+                    str(labelset[label_entry['label']])
                 ]))
-                labelset.add(label_entry['label'])
+                
             rows.append(' '.join(row) + '\n')
 
     filepath = f'outputs/{name}.txt'
@@ -103,8 +108,9 @@ def load_set_as_txt(name, sets):
         f.writelines(rows)
 
     labelpath = f'outputs/{name}_labels.txt'
+    labelset_sorted = sorted(labelset.items(), key=lambda x: x[1])
     with open(labelpath, 'w') as f:
-        f.writelines([x + '\n' for x in labelset])
+        f.writelines([str(x[0]) + '\n' for x in labelset_sorted])
 
     return filepath, labelpath
 
@@ -130,10 +136,11 @@ def load_set_as_csv_pbtxt(name, sets, pbtxt=False):
         labels = find_set(label_id)
 
         for i, l in labels_to_df(labels).iterrows():
+            fp = f"{image_folder}/{DATASTORE_NAME}/{l['image_url']}"
+            im = Image.open(fp)
+            width, height = im.size
+
             for label_entry in l['label']:
-                fp = f"{image_folder}/{DATASTORE_NAME}/{l['image_url']}"
-                im = Image.open(fp)
-                width, height = im.size
                 row = [
                     label_entry['label'],
                     fp,
@@ -167,3 +174,73 @@ def load_set_as_csv_pbtxt(name, sets, pbtxt=False):
             f.write(out)
 
     return filepath, labelpath
+
+
+def _calc_bbox_center_fraction(width, height, topX, bottomX, topY, bottomY):
+    box_width = topX - bottomX
+    box_height = topY - bottomY
+    center_x = bottomX + (box_width / 2)
+    center_y = bottomY + (box_height / 2)
+    return [
+        center_x / width,
+        center_y / height,
+        box_width / width,
+        box_height / height
+    ]
+
+
+def load_datasets_for_yolo_v5(train_sets, test_sets):
+    # Prepare dirs
+    os.makedirs('outputs/data/train/images', exist_ok=True)
+    os.makedirs('outputs/data/train/labels', exist_ok=True)
+    os.makedirs('outputs/data/test/images', exist_ok=True)
+    os.makedirs('outputs/data/test/labels', exist_ok=True)
+
+    labelset = {}
+    for label_id, image_folder in zip(train_sets[0::2], train_sets[1::2]):
+        labels = find_set(label_id)
+
+        for i, l in labels_to_df(labels).iterrows():
+            fp = f"{image_folder}/{DATASTORE_NAME}/{l['image_url']}"
+            im = Image.open(fp)
+            width, height = im.size
+
+            # Copy file into correct folder
+            target = 'data/train/images/' + l['image_url']
+            label_target = 'data/train/labels/' + \
+                '.'.join(l['image_url'].split('.')[:-1] + ['.txt'])
+            os.makedirs(os.path.dirname(target), exist_ok=True)
+            os.makedirs(os.path.dirname(label_target), exist_ok=True)
+            shutil.copy(fp, target)
+
+            with open(label_target, 'w') as f:
+                for label_entry in l['label']:
+                    # Create new, numbered, entry of label in labelset
+                    if label_entry['label'] not in labelset:
+                        labelset[label_entry['label']] = len(labelset)
+
+                    row = [str(labelset[label_entry['label']])] + \
+                        _calc_bbox_center_fraction(
+                            width,
+                            height,
+                            label_entry['topX'],
+                            label_entry['bottomX'],
+                            label_entry['topY'],
+                            label_entry['bottomY']
+                        )
+                    f.write(' '.join(row) + '\n')
+
+                    labelset.add(label_entry['label'])
+
+    labelset_sorted = sorted(labelset.items(), key=lambda x: x[1])
+
+    # Create yaml file
+    with open('outputs/data/dataset.yaml', 'w') as f:
+        f.write('train: data/train/images/\n')
+        f.write('val: data/test/images/\n')
+        f.write('\n')
+        f.write(f'nc: {str(len(labelset))}\n')
+        f.write('\n')
+        f.write(f'names: {[x[0] for x in labelset_sorted]}')
+
+    return 'outputs/data/dataset.yaml'

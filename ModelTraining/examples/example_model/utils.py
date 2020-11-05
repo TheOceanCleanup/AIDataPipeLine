@@ -100,7 +100,7 @@ def load_set_as_txt(name, sets):
                     str(label_entry['topY']),
                     str(labelset[label_entry['label']])
                 ]))
-                
+
             rows.append(' '.join(row) + '\n')
 
     filepath = f'outputs/{name}.txt'
@@ -152,7 +152,7 @@ def load_set_as_csv_pbtxt(name, sets, pbtxt=False):
                     label_entry['bottomY']
                 ]
                 labelset.add(label_entry['label'])
-            rows.append(row)
+                rows.append(row)
 
     filepath = f'outputs/{name}.csv'
     with open(filepath, 'w') as f:
@@ -176,28 +176,52 @@ def load_set_as_csv_pbtxt(name, sets, pbtxt=False):
     return filepath, labelpath
 
 
-def _calc_bbox_center_fraction(width, height, topX, bottomX, topY, bottomY):
+def _calc_bbox_center_fraction(img_width, img_height, topX, bottomX, topY,
+        bottomY):
+    """
+    Calculate yolo v5 representation of Bounding Box, which is different in two
+    ways:
+    - indicated as (center_x, center_y, width, height)
+    - coordinates and sizes are indicated as fraction of image, instead of
+      pixels.
+
+    :param img_width:   Width of the image
+    :param img_height:  Height of the image
+    :param topX:        Right border in x direction, as pixels
+    :param bottomX:     Left border in x direction, as pixels
+    :param topX:        Bottom border in x direction, as pixels
+    :param bottomX:     Top border in x direction, as pixels
+    :returns:           List of [
+                            X coordinate of center, as fraction,
+                            Y coordinate of center, as fraction,
+                            width of bounding box, as fraction,
+                            height of bounding box, as fraction
+                        ]
+    """
     box_width = topX - bottomX
     box_height = topY - bottomY
     center_x = bottomX + (box_width / 2)
     center_y = bottomY + (box_height / 2)
     return [
-        center_x / width,
-        center_y / height,
-        box_width / width,
-        box_height / height
+        center_x / img_width,
+        center_y / img_height,
+        box_width / img_width,
+        box_height / img_height
     ]
 
 
-def load_datasets_for_yolo_v5(train_sets, test_sets):
-    # Prepare dirs
-    os.makedirs('outputs/data/train/images', exist_ok=True)
-    os.makedirs('outputs/data/train/labels', exist_ok=True)
-    os.makedirs('outputs/data/test/images', exist_ok=True)
-    os.makedirs('outputs/data/test/labels', exist_ok=True)
+def _parse_set_yolov5(set_type, sets, labelset):
+    """
+    Parse a set of sets to move images in the correct folder and create label
+    files for yolov5.
 
-    labelset = {}
-    for label_id, image_folder in zip(train_sets[0::2], train_sets[1::2]):
+    :param set_type:        The type of set (train or test)
+    :param sets:            A list of (label, image) set combinations
+    :param labelset:        Dict containing the labels and their int-based ID
+    :returns:               The adjusted labelset.
+    """
+    # Build train set
+    for label_id, image_folder in zip(sets[0::2], sets[1::2]):
         labels = find_set(label_id)
 
         for i, l in labels_to_df(labels).iterrows():
@@ -206,9 +230,10 @@ def load_datasets_for_yolo_v5(train_sets, test_sets):
             width, height = im.size
 
             # Copy file into correct folder
-            target = 'data/train/images/' + l['image_url']
-            label_target = 'data/train/labels/' + \
-                '.'.join(l['image_url'].split('.')[:-1] + ['.txt'])
+            img_url = l['image_url'].replace('/', '_')
+            target = f'data/{set_type}/images/{img_url}'
+            label_target = f'data/{set_type}/labels/' + \
+                '.'.join(img_url.split('.')[:-1] + ['txt'])
             os.makedirs(os.path.dirname(target), exist_ok=True)
             os.makedirs(os.path.dirname(label_target), exist_ok=True)
             shutil.copy(fp, target)
@@ -220,24 +245,48 @@ def load_datasets_for_yolo_v5(train_sets, test_sets):
                         labelset[label_entry['label']] = len(labelset)
 
                     row = [str(labelset[label_entry['label']])] + \
-                        _calc_bbox_center_fraction(
+                        [str(x) for x in _calc_bbox_center_fraction(
                             width,
                             height,
                             label_entry['topX'],
                             label_entry['bottomX'],
                             label_entry['topY'],
                             label_entry['bottomY']
-                        )
+                        )]
                     f.write(' '.join(row) + '\n')
 
-                    labelset.add(label_entry['label'])
+    return labelset
+
+
+def load_datasets_for_yolo_v5(train_sets, test_sets):
+    """
+    Load the datasets. Expects a list of (label, image) set combinations.
+
+    This version writes the output to CSV files, as expected by the yolo v5
+    model. It moves the images all into /train/images and /test/images
+    locations, and generates a label .txt file per image in /train/labels and
+    /test/labels. It then creates a yaml file pointing to these files.
+
+    :param train_sets:  A list of (label, image) set combinations
+    :param test_sets:   A list of (label, image) set combinations
+    :returns:           Path to the generated yaml file.
+    """
+    # Prepare dirs
+    os.makedirs('outputs/data/train/images', exist_ok=True)
+    os.makedirs('outputs/data/train/labels', exist_ok=True)
+    os.makedirs('outputs/data/test/images', exist_ok=True)
+    os.makedirs('outputs/data/test/labels', exist_ok=True)
+    labelset = {}
+
+    labelset = _parse_set_yolov5("train", train_sets, labelset)
+    labelset = _parse_set_yolov5("test", test_sets, labelset)
 
     labelset_sorted = sorted(labelset.items(), key=lambda x: x[1])
 
     # Create yaml file
     with open('outputs/data/dataset.yaml', 'w') as f:
-        f.write('train: data/train/images/\n')
-        f.write('val: data/test/images/\n')
+        f.write('train: ../data/train/images/\n')
+        f.write('val: ../data/test/images/\n')
         f.write('\n')
         f.write(f'nc: {str(len(labelset))}\n')
         f.write('\n')

@@ -36,3 +36,7 @@ azureml-defaults==1.17.0
 azureml-telemetry==1.17.0
 azureml-train-restclients-hyperdrive==1.17.0
 azureml-train-core==1.17.0
+
+#horovod
+mkl
+future

@@ -38,9 +38,7 @@ if __name__ == "__main__":
     )
 
     # Move weights file to correct folder
-    logger.debug(os.listdir(parameters.weights))
     for f in os.listdir(parameters.weights):
-        logger.debug(f)
         shutil.copy(
             f"{parameters.weights}/{f}",
             f"yolov5/weights/{f}"

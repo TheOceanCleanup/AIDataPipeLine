@@ -48,8 +48,6 @@ if __name__ == "__main__":
 
     logger.info("Starting training")
 
-
-    # TODO Add model here and training here
     p = subprocess.run(
         [
             "python",
@@ -71,10 +69,6 @@ if __name__ == "__main__":
 
     #### Determine model performance ####
     logger.debug("Measuring performance")
-
-    # TODO: Determine model performance here
-    accuracy = 0.97
-
 
     #### Register model performance with the run ####
 

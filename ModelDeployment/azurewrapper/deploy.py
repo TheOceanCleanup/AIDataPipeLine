@@ -2,6 +2,7 @@ from azureml.core import Model
 from azureml.core.model import InferenceConfig
 from azureml.core.webservice import LocalWebservice, Webservice, \
     AciWebservice, AksWebservice
+from azureml.exceptions import WebserviceException
 
 
 def deploy(workspace, name, model, script, source_directory, environment=None,
@@ -30,11 +31,26 @@ def deploy(workspace, name, model, script, source_directory, environment=None,
             auth_enabled=False
         )
 
-    service = Model.deploy(
-        workspace,
-        name,
-        [model],
-        inference_config,
-        deployment_config
-    )
+    try:
+        service = Webservice(workspace, name)
+    except WebserviceException:
+        service = None
+
+    if service is None:
+        service = Model.deploy(
+            workspace,
+            name,
+            [model],
+            inference_config,
+            deployment_config
+        )
+    else:
+        print(
+            "Existing service with that name found, updating InferenceConfig\n"
+            "If you meant to redeploy or change the deployment option, first "
+            "delete the existing service."
+        )
+        service.update(
+            models=[model],
+            inference_config=inference_config)
     return service

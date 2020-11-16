@@ -39,7 +39,7 @@ def run(request):
     #   import cv2
     #
     #   nparr = np.frombuffer(data, np.uint8)
-    #   image = cv2.imdecode(nparr, cv2.CV_LOAD_IMAGE_COLOR)
+    #   original_image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
     #   ```
     # - Create a PIL image in memory:
     #   ```

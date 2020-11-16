@@ -10,6 +10,7 @@ import json
 
 
 yolo = None
+labels = []
 input_size = 416
 score_threshold=0.3
 iou_threshold=0.45
@@ -17,7 +18,6 @@ iou_threshold=0.45
 
 def init():
     global yolo
-    global YOLO_CUSTOM_WEIGHTS
     print(os.listdir(os.getenv('AZUREML_MODEL_DIR')))
     yolo = Load_Yolo_model_custom(
         os.path.join(
@@ -29,6 +29,11 @@ def init():
             'outputs/labels.names'
         )
     )
+    with open(
+            os.path.join(os.getenv('AZUREML_MODEL_DIR'),
+                         'outputs/labels.names')) as f:
+        for l in f.readlines():
+            labels.append(l.rstrip('\n'))
 
 
 @rawhttp
@@ -42,7 +47,9 @@ def run(request):
 
     if request.method == 'POST':
         data = request.get_data(False)
-        # TODO verify data is provided
+        if len(data) == 0:
+            return AMLResponse(
+                "No data received - please provide an image as body", 400)
 
         nparr = np.frombuffer(data, np.uint8)
         original_image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
@@ -52,7 +59,7 @@ def run(request):
         pred_bbox = yolo.predict(image_data)
         pred_bbox = [tf.reshape(x, (-1, tf.shape(x)[-1])) for x in pred_bbox]
         pred_bbox = tf.concat(pred_bbox, axis=0)
-        
+
         bboxes = postprocess_boxes(pred_bbox, original_image, input_size, score_threshold)
         bboxes = nms(bboxes, iou_threshold, method='nms')
 
@@ -66,7 +73,7 @@ def run(request):
                 'ymin': int(box[1]),
                 'ymax': int(box[3]),
                 'score': float(box[4]),
-                'label': int(box[5])
+                'label': labels[int(box[5])]
             })
 
         return AMLResponse(json.dumps(result), 200)

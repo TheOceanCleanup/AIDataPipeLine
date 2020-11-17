@@ -8,4 +8,7 @@ setuptools.setup(
         "deployment for The Ocean Cleanup.",
     packages=setuptools.find_packages(),
     python_requires='>=3.6',
+    install_requires=[
+        'azureml-sdk==1.16.0',
+    ],
 )

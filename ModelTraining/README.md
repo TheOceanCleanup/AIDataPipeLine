@@ -1,20 +1,19 @@
 # Training and registering models with Azure ML
 
-This repo provides the required items to train and register models 
-within Azure ML.
+This repo provides the required items to train and register models within Azure
+ML.
 
 The subdirectories contain the following:
 
-- `skeleton_files`: These files are basics for creating a new
-                    Run within AzureML. `train.py` takes the
-                    provided datasets and parameters, and uses
-                    these to orchestrate the training of the model.
-                    This code is run within the training
-                    environment on AzureML, which is either a
-                    locally or within Compute cluster on AzureML,
-                    but all organized through AzureML.
-- `examples`:       These are implementations of the skeleton files
-                    for some example models.
+- `skeleton_files/`:  These files are basics for creating a new Run within
+                      AzureML. `train.py` takes the provided datasets and
+                      parameters, and uses these to orchestrate the training of
+                      the model. This code is run within the training
+                      environment on AzureML, which is either a locally or
+                      within Compute cluster on AzureML, but all organized
+                      through AzureML.
+- `examples/`:        These are implementations of the skeleton files for some
+                      example models.
 
 # Getting started
 
@@ -39,6 +38,6 @@ Examples of implementations of this can be found in the `examples`
 directory.
 
 Once you have this file created, you can use the helper functions
-from the `azurewrapper` directory to perform Runs within an
+from the `toc_azurewrapper` package to perform Runs within an
 Experiment on AzureML. Examples of this can be found in the 
 notebooks in the ModelTraining directory.

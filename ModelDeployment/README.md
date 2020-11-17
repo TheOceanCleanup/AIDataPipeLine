@@ -112,9 +112,9 @@ For example:
 ## Deploying the model
 
 Once you have this file created, you can use the helper functions
-from the `toc_azurewrapper` package to perform Runs within an
-Experiment on AzureML. Examples of this can be found in the 
-notebooks in the ModelTraining directory.
+from the `toc_azurewrapper` package to deploy the model, with an environment,
+to the desired compute target. Examples of this can be found in the notebooks
+in the `ModelDeployment/` directory.
 
 # Azure ML on AKS: dev-test vs production
 

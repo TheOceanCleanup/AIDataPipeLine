@@ -1,48 +1,98 @@
-# Training and registering models with Azure ML
+# The Ocean Cleanup on Azure ML
 
-This repo provides the required items to train and register models 
-within Azure ML.
+This repo contains components for The Ocean Cleanup to work with Azure ML.
+There is a package called `toc_azurewrapper` that provides some helpful
+functions, meaning the amount of direct interaction with AzureML is decreased
+and consistency is increased.
 
-The subdirectories contain the following:
+Furthermore, there are skeleton files for getting started with both model
+training and model deployment, as well as example implementations of these and
+notebooks outlining how to perform these actions.
 
-- `azurewrapper`:   Contains helper functions for some often-used
-                    functionalities for interacting with AzureML.
-                    This is to be used on the machine of the
-                    developer/data scientist.
-- `skeleton_files`: These files are basics for creating a new
-                    Run within AzureML. `train.py` takes the
-                    provided datasets and parameters, and uses
-                    these to orchestrate the training of the model.
-                    This code is run within the training
-                    environment on AzureML, which is either a
-                    locally or within Compute cluster on AzureML,
-                    but all organized through AzureML.
-- `examples`:       These are implementations of the skeleton files
-                    for some example models.
+## Repository Structure
+
+There are a few seperate directories:
+
+- `AzureML_API_examples/`:  These are some basic scripts showing basic
+                            operations on AzureML. These are superseded by /
+                            implemented in the operations in the
+                            `toc_azurewrapper` package, and are left here
+                            merely as reference.
+- `ModelDeployment/`:       Examples, skeleton files and notebooks for
+                            deploying an existing model for production. See the
+                            included README in that directory for more
+                            information.
+- `ModelTraining/`:         Examples, skeleton files and notebooks for training
+                            a model. See the included README in that directory
+                            for more information.
+- `toc_azurewrapper/`:      Package providing often-used Azure ML operations.
+                            See below for instructions on how to install.
 
 # Getting started
 
-When you have a new model that you want to train using AzureML, you
-will first make a copy of the `skeleton_files` folder (or from one
-of the examples). There are some things to fill in in `train.py`.
-`utils.py` contains functions that can help you with this. The 
-following things need to be added/changed in these files.
+## Installing AzureML Wrapper
 
-- What parameters your model requires (and you will provide per
-  training run)
-- How to format/load the datasets so your model can handle it. Some
-  functions to do this are available in `utils.py`, but your case
-  might require some special handling.
-- How to prepare the model and start the training process
-- How to analyze the performance of your trained model
-- What metrics to store
-- What artifacts of the model to store with the run (in order to
-  be able to use them with a later deployment)
+To get started, first we need to install the Azure wrapper. This will also
+install the AzureML SDK, if not yet installed.
 
-Examples of implementations of this can be found in the `examples`
-directory.
+Navigate to the `toc_azurewrapper` directory, and install the package through
+pip:
 
-Once you have this file created, you can use the helper functions
-from the `azurewrapper` directory to perform Runs within an
-Experiment on AzureML. Examples of this can be found in the 
-notebooks in the ModelTraining directory.
+```
+cd toc_azurewrapper
+pip install .
+```
+
+After this, verify that the package is installed correctly by opening a new
+terminal and executing `python -c "import toc_azurewrapper"`. If this gives no
+errors, everything is installed correctly.
+
+## Training a model
+
+Training a model is done with the resources found in the `ModelTraining`
+directory. For a detailed instruction, see the README there. In short, the
+process is as follows. First a wrapper around the model needs to be created. A
+start can be found in the `ModelTraining/skeleton_files/` directory as
+`train.py`, and example implementations are available under
+`ModelTraining/examples/`.
+
+Once this wrapper is available, the model can be trained. For this, a few
+things need to be specified:
+
+- an `Environment`, which describes the requirements etc.
+- a `compute target`, which is the resource where the training is performed
+- an `Experiment`, a logical container for multiple training runs
+- the desired `Data Sets` for training and testing
+- a `ScriptRunConfig`, the total configuration, together with the code of the
+  model
+
+After this, the `ScriptRunConfig` can be submitted to the `Experiment` to start
+the training run.
+
+Examples and more detailed instructions about how to do all this can be found
+as notebooks in the `ModelTraining/` directory,
+
+## Deploying a model
+
+Deploying a model is done with the resources found in the `ModelDeployment/`
+directory. See the README there for detailed information. In short, the
+process is as follows. First, the model must have been trained and registered.
+Once this is done, we need to create a so-called _scoring script_, `score.py`.
+This script needs to implement two functions: `init()` and `run(request)`. The
+first function will load or initialize the model, the second will handle a
+single request for performing inference on an image. As with the model
+training, a skeleton version of this file can be found under the
+`ModelDeployment/skeleton_files` directory as `score.py`, and example
+implementations are available under `ModelDeployment/examples/`.
+
+Once the scoring script is created, like with the training we need to specify
+a few things:
+
+- a `Model` to deploy
+- an `Environment`, which describes the requirements etc.
+- a `compute target`, which is the resource where the inference is performed
+- a `Service`, which is the created deployment from the model and environment,
+  deployed to the indicated compute target
+
+Examples and more detailed instructions about how to do all this can be found
+as notebooks in the `ModelDeployment/` directory,

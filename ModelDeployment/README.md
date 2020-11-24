@@ -73,7 +73,7 @@ functions in the `score.py` script.
 In the `init()` function, you will be loading the artifacts that were
 registered with the model, as well as performing any other initialization
 logic. The artifacts are mounted on the filesystem as a folder, pointed to by
-the environment variable.
+the environment variable `AZUREML_MODEL_DIR`.
 
 In the `run(request)` function, you receive the raw binary bytes of the image.
 You will then implement some way to format this data as required by your model

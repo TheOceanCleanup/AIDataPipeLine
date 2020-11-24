@@ -75,4 +75,7 @@ def get_environment(workspace, name, pip_requirements=None,
         env.docker.enabled = True
         env.docker.base_image = docker_image
 
+    # Register environment
+    env.register(workspace=workspace)
+
     return env

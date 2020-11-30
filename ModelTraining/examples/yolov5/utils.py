@@ -225,7 +225,7 @@ def _parse_set_yolov5(set_type, sets, labelset):
         labels = find_set(label_id)
 
         for i, l in labels_to_df(labels).iterrows():
-            fp = f"{image_folder}/{DATASTORE_NAME}/{l['image_url']}"
+            fp = f"{image_folder}/{l['image_url']}"
             im = Image.open(fp)
             width, height = im.size
 

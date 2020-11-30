@@ -38,11 +38,11 @@ if __name__ == "__main__":
     )
 
     # Move weights file to correct folder
-    for f in os.listdir(parameters.weights):
-        shutil.copy(
-            f"{parameters.weights}/{f}",
-            f"yolov5/weights/{f}"
-        )
+
+#     shutil.copy(
+#             f"{parameters.weights}",
+#             f"yolov5/weights/{parameters.weights}"
+#     )
 
     #### Implement/perform model training ####
 
@@ -52,10 +52,11 @@ if __name__ == "__main__":
         [
             "python",
             "train.py",
-            "--epochs", "10",
+            "--epochs", "120",
             "--data", '../' + dataset_path,
             "--weights", parameters.weights,
             "--batch-size", "16",
+            "--hyp", 'data/hyp.finetune.yaml',
             "--cfg", "models/yolov5l.yaml"
         ],
         cwd="yolov5",
@@ -92,7 +93,7 @@ if __name__ == "__main__":
         'mAP@0.5:0.95': 11
     }
     results = {}
-    with open('yolov5/runs/exp0/results.txt') as f:
+    with open('yolov5/runs/exp0/results.txt', 'r') as f:
         for l in f.readlines():
             l = l.rstrip('\n').split()
             for t, index in res_mapping.items():

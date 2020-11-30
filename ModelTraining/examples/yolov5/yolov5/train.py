@@ -424,6 +424,9 @@ if __name__ == '__main__':
     set_logging(opt.global_rank)
     if opt.global_rank in [-1, 0]:
         check_git_status()
+        
+    logger.info(f"Location of weights is {opt.weights}")    
+    
 
     # Resume
     if opt.resume:  # resume an interrupted run
@@ -437,6 +440,7 @@ if __name__ == '__main__':
 
     else:
         # opt.hyp = opt.hyp or ('hyp.finetune.yaml' if opt.weights else 'hyp.scratch.yaml')
+        logger.info(f"Error at checking files, location of data is {opt.data} and location of config is {opt.cfg}")
         opt.data, opt.cfg, opt.hyp = check_file(opt.data), check_file(opt.cfg), check_file(opt.hyp)  # check files
         assert len(opt.cfg) or len(opt.weights), 'either --cfg or --weights must be specified'
         opt.img_size.extend([opt.img_size[-1]] * (2 - len(opt.img_size)))  # extend to 2 sizes (train, test)

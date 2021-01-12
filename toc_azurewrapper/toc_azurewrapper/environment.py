@@ -5,7 +5,7 @@ from azureml.exceptions import AzureMLException
 def get_environment(workspace, name, pip_requirements=None,
                     conda_specification=None, conda_env=None,
                     docker_image=None, docker_file=None,
-                    override=False):
+                    override=False, add_inference_stack=False):
     """
     Get an Azure ML environment from PIP or Conda. From:
     - pip_requirements
@@ -30,6 +30,9 @@ def get_environment(workspace, name, pip_requirements=None,
     :params docker_file:            Base the image off a Dockerfile.
     :params override:               Create a new environment with this name,
                                     regardless of if one already exists.
+    :params add_inference_stack:    Add a stack that enables this environment
+                                    for inference. "latest" is a valid option.
+                                    Set to False to not add this.
     :returns:                       Azure ML environment or None in case of
                                     failure
     """
@@ -74,6 +77,9 @@ def get_environment(workspace, name, pip_requirements=None,
     elif docker_image is not None:
         env.docker.enabled = True
         env.docker.base_image = docker_image
+
+    if add_inference_stack:
+        env.inferencing_stack_version = add_inference_stack
 
     # Register environment
     env.register(workspace=workspace)
